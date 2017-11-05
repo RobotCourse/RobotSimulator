@@ -8,27 +8,33 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    ui->starttime->setText("51856422");
     QString config = "config.xml";
     Simulator *xtion = new Simulator("Robot", "Sensor_xtion", "xtion", config, QTime(), 1);
-    xtion->setOutputNodesName(QStringList() << "xtionVis");
+    xtion->setOutputNodesName(QStringList() << "xtionVis;ProcessorCore");
 
     VisualizationMono *xtionVis = new VisualizationMono("Robot", "Sensor_xtion", "xtionVis", config);
     xtionVis->setInputNodesName(QStringList() << "xtion");
     xtionVis->connectExternalTrigger(0, DRAINSLOT);
 
     Simulator *urg = new Simulator("Robot", "Sensor_URG", "urg", config, QTime(), 1);
-    urg->setOutputNodesName(QStringList() << "urgVis");
+    urg->setOutputNodesName(QStringList() << "urgVis;ProcessorCore");
 
     VisualizationMono *urgVis = new VisualizationMono("Robot", "Sensor_URG", "urgVis", config);
     urgVis->setInputNodesName(QStringList() << "urg");
     urgVis->connectExternalTrigger(0, DRAINSLOT);
 
     Simulator *odom = new Simulator("Robot", "Sensor_EncoderIMU", "odom", config, QTime(), 1);
-    odom->setOutputNodesName(QStringList() << "odomVis");
+    odom->setOutputNodesName(QStringList() << "odomVis;ProcessorCore");
 
     VisualizationMono *odomVis = new VisualizationMono("Robot", "Sensor_EncoderIMU", "odomVis", config);
     odomVis->setInputNodesName(QStringList() << "odom");
     odomVis->connectExternalTrigger(0, DRAINSLOT);
+
+    ProcessorMulti *ProcessorCore = new ProcessorMulti("Robot", "Processor_Core", "ProcessorCore", config);
+    ProcessorCore->setInputNodesName(QStringList() << "odom" << "urg" << "xtion");
+//    ProcessorCore->setOutputNodesName(QStringList() << "EncoderIMU");
+    ProcessorCore->connectExternalTrigger(0, PROCESSORSLOT);
 
     edge.addNode(xtion, 1, 1);
     edge.addNode(xtionVis, 0, 0);
@@ -36,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     edge.addNode(urgVis, 0, 0);
     edge.addNode(odom, 1, 1);
     edge.addNode(odomVis, 0, 0);
+    edge.addNode(ProcessorCore, 1, 1);
     edge.connectAll();
 
     connect(ui->open, &QPushButton::clicked, &edge, &Edge::openAllNodesSlot);
